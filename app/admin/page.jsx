@@ -1,110 +1,14 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import 'leaflet-defaulticon-compatibility';
-import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 
-const LocationPicker = ({ onLocationConfirm }) => {
-  const [position, setPosition] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const LocationMarker = () => {
-    const map = useMap();
-    useEffect(() => {
-      if (position) {
-        map.setView(position, 13); // Center the map on the new position
-      }
-    }, [map, position]);
-
-    useMapEvents({
-      click(e) {
-        setPosition(e.latlng);
-      },
-    });
-
-    return position === null ? null : (
-      <Marker position={position}></Marker>
-    );
-  };
-
-  const handleSearch = async () => {
-    if (!searchTerm) return;
-    try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${searchTerm}`);
-      const data = await response.json();
-      if (data.length > 0) {
-        const { lat, lon } = data[0];
-        setPosition({ lat: parseFloat(lat), lng: parseFloat(lon) });
-      } else {
-        alert('No results found');
-      }
-    } catch (error) {
-      console.error('Error fetching search results:', error);
-      alert('An error occurred while searching for the location.');
-    }
-  };
-
-  const clearPosition = () => {
-    setPosition(null);
-    setSearchTerm('');
-  };
-
-  const confirmPosition = () => {
-    if (position) {
-      onLocationConfirm(`${position.lat},${position.lng}`);
-    } else {
-      alert('No position selected to confirm.');
-    }
-  };
-
-  return (
-    <div className="mb-4">
-      <div className="flex flex-col sm:flex-row mb-2 gap-2">
-        <input 
-          type="text" 
-          placeholder="Search for a location"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-lg sm:rounded-l-lg sm:rounded-r-none"
-        />
-        <div className="flex gap-1">
-          <button 
-            onClick={handleSearch} 
-            className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg sm:rounded-none hover:bg-blue-600"
-          >
-            Search
-          </button>
-          <button 
-            onClick={clearPosition} 
-            className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg sm:rounded-r-lg sm:rounded-l-none hover:bg-gray-300"
-          >
-            Clear
-          </button>
-        </div>
-      </div>
-      <MapContainer 
-        center={[11.0080177, 76.9501661]} 
-        zoom={13} 
-        style={{ height: '300px', width: '100%' }}
-        className="mb-2 rounded-lg"
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <LocationMarker />
-      </MapContainer>
-      <button 
-        onClick={confirmPosition} 
-        className="w-full bg-green-500 text-white p-2 rounded-lg hover:bg-green-600"
-      >
-        Confirm Location
-      </button>
-    </div>
-  );
-};
+// Dynamically import MapContainer component with no SSR
+const MapWithNoSSR = dynamic(
+  () => import('./MapComponent'),
+  { ssr: false }
+);
 
 export default function AdminPage() {
   const router = useRouter();
@@ -120,12 +24,14 @@ export default function AdminPage() {
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [taskStatusFilter, setTaskStatusFilter] = useState("all");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    // Set isClient to true once component mounts
+    setIsClient(true);
     
     // Check for user session and set user data
-    const storedUser = sessionStorage.getItem("user");
+    const storedUser = sessionStorage?.getItem("user");
     if (!storedUser) {
       router.replace("/"); // Redirect if no user session
       return;
@@ -178,8 +84,10 @@ export default function AdminPage() {
   }, [router]);
 
   const handleLogout = () => {
-    sessionStorage.removeItem("user"); // Clear session
-    router.replace("/"); // Redirect to login
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("user"); // Clear session
+      router.replace("/"); // Redirect to login
+    }
   };
 
   const handleAssignTask = async () => {
@@ -260,8 +168,8 @@ export default function AdminPage() {
     setMobileMenuOpen(false);
   };
 
-  // Show loading or redirect state while user data is being fetched
-  if (!user) {
+  // Show loading state until client-side code runs
+  if (!isClient || !user) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
@@ -363,7 +271,7 @@ export default function AdminPage() {
                   ? "bg-blue-600 text-white" 
                   : "text-gray-600 hover:bg-gray-200"}`}
             >
-              Requests
+                Requests
             </button>
           </div>
         </div>
@@ -468,8 +376,8 @@ export default function AdminPage() {
                 </button>
               </div>
             </div>
-            {showLocationPicker && (
-              <LocationPicker onLocationConfirm={handleLocationConfirm} />
+            {showLocationPicker && isClient && (
+              <MapWithNoSSR onLocationConfirm={handleLocationConfirm} />
             )}
             <button
               onClick={handleAssignTask}
@@ -536,31 +444,23 @@ export default function AdminPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full table-auto">
                     <thead>
-                      <tr className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-                        <th className="py-3 px-2 md:px-6 text-left">Title</th>
-                        <th className="py-3 px-2 md:px-6 text-left">Description</th>
-                        <th className="py-3 px-2 md:px-6 text-left">Assigned To</th>
-                        <th className="py-3 px-2 md:px-6 text-left">Status</th>
-                        <th className="py-3 px-2 md:px-6 text-left">Due Date</th>
-                        <th className="py-3 px-2 md:px-6 text-left">Location</th>
+                      <tr className="bg-gray-50">
+                        <th className="px-4 py-2 text-left">Title</th>
+                        <th className="px-4 py-2 text-left">Assigned To</th>
+                        <th className="px-4 py-2 text-left">Due Date</th>
+                        <th className="px-4 py-2 text-left">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="text-gray-600 text-sm font-light">
+                    <tbody>
                       {filteredTasks.map((task) => (
-                        <tr key={task.id} className="border-b border-gray-200 hover:bg-gray-100">
-                          <td className="py-3 px-2 md:px-6 text-left whitespace-nowrap">
-                            <span className="font-medium">{task.title}</span>
-                          </td>
-                          <td className="py-3 px-2 md:px-6 text-left">
-                            <div className="max-w-xs truncate">{task.description}</div>
-                          </td>
-                          <td className="py-3 px-2 md:px-6 text-left">
-                            <span>{users.find(u => u.id === task.assigned_to)?.username || task.assigned_to}</span>
-                          </td>
-                          <td className="py-3 px-2 md:px-6 text-left">
+                        <tr key={task.id} className="border-t hover:bg-gray-50">
+                          <td className="px-4 py-2">{task.title}</td>
+                          <td className="px-4 py-2">{users.find(u => u.id === task.assigned_to)?.username || task.assigned_to}</td>
+                          <td className="px-4 py-2">{task.due_date}</td>
+                          <td className="px-4 py-2">
                             <span 
                               className={`
-                                px-2 py-1 rounded-full text-xs 
+                                px-2 py-0.5 rounded-full text-xs 
                                 ${task.status === 'pending' ? 'bg-yellow-200 text-yellow-600' : 
                                   task.status === 'in_progress' ? 'bg-blue-200 text-blue-600' : 
                                   'bg-green-200 text-green-600'}
@@ -568,12 +468,6 @@ export default function AdminPage() {
                             >
                               {task.status}
                             </span>
-                          </td>
-                          <td className="py-3 px-2 md:px-6 text-left">
-                            <span>{task.due_date}</span>
-                          </td>
-                          <td className="py-3 px-2 md:px-6 text-left">
-                            <span className="text-xs truncate">{task.coordinates}</span>
                           </td>
                         </tr>
                       ))}

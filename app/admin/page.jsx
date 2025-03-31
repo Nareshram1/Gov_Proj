@@ -116,7 +116,7 @@ export default function AdminPage() {
 
     if (error) {
       console.error("Error assigning task:", error);
-      alert("Failed to assign task");
+      alert("Failed to assign task", error);
     } else {
       // Reload tasks after insertion
       const { data: updatedTasks, error: fetchError } = await supabase

@@ -104,7 +104,7 @@ export default function LoginPage() {
 
         // Store user details in sessionStorage
         sessionStorage.setItem("user", JSON.stringify(data));
-
+        console.log("DATA",data.is_admin);
         // Redirect based on user role
         if (data.is_admin) {
             router.replace("/admin");

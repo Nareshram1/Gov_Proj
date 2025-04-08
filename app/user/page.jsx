@@ -47,7 +47,7 @@ export default function UserPage() {
     if (typeof window === "undefined") return;
 
     const { data, error } = await supabase.storage
-      .from("task_documents")
+      .from("task-documents")
       .upload(`documents/${taskId}/${file.name}`, file);
     
     if (error) {

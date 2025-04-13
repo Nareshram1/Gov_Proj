@@ -741,7 +741,7 @@ const DocumentViewer = ({ isOpen, onClose, documentUrl, documentName }) => {
                     download={documentName || 'document'}
                     className="p-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-800"
                     title="Download"
-                    target="_blank"
+                    
                 >
                     <Download size={18} />
                 </a>
@@ -833,7 +833,7 @@ const DocumentViewer = ({ isOpen, onClose, documentUrl, documentName }) => {
                         <a
                             href={documentUrl}
                             download={documentName || 'document'}
-                            target="_blank"
+                            
                             className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                         >
                           <Download className="mr-2" size={16} /> Download File
@@ -883,7 +883,6 @@ const DocumentActions = ({ documentUrl, documentName }) => {
                 download={documentName || 'document'}
                 className="flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-xs sm:text-sm"
                 title="Download Document"
-                target="_blank"
              >
                <Download className="mr-1.5" size={14} /> Download
              </a>

@@ -19,6 +19,7 @@
     "leaflet-defaulticon-compatibility": "^0.1.2",
     "lucide-react": "^0.475.0",
     "next": "14.2.3",
+    "notistack": "^3.0.2",
     "react": "^18",
     "react-dom": "^18",
     "react-leaflet": "^4.2.1",

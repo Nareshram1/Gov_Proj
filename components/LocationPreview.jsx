@@ -41,7 +41,7 @@ const LocationPreview = ({ location }) => {
   const mapKey = `<span class="math-inline">\{lat\}\-</span>{lng}-${Date.now()}`;
 
   return (
-    <div className="h-36 z-0 rounded-md overflow-hidden mt-2">
+    <div className="h-36 z-[1001] rounded-md overflow-hidden mt-2">
       <MapContainer
         center={[location.coordinates[0], location.coordinates[1]]}
         zoom={13}
